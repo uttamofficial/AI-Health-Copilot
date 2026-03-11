@@ -277,3 +277,38 @@
     display: none !important;
   }
 }
+
+/* ── Chatbot Responsive Layout ── */
+
+/* Mobile: full-screen modal */
+@media (max-width: 767px) {
+  .chatbot-window {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    z-index: 9999;
+  }
+
+  /* Hide the FAB while the chat window is open */
+  .chatbot-window ~ .chatbot-fab {
+    display: none !important;
+  }
+}
+
+/* Tablet: 340px × 75vh */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .chatbot-window {
+    width: 340px !important;
+    height: 75vh !important;
+  }
+}
+
+/* Desktop: 400px × 70vh */
+@media (min-width: 1024px) {
+  .chatbot-window {
+    width: 400px !important;
+    height: 70vh !important;
+  }
+}

@@ -1,15 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "";
-// Models tried in order; if one fails/is rate-limited the next is used
-const FREE_MODELS = [
-  "openai/gpt-4o-mini",
-  "google/gemma-3-4b-it:free",
-  "meta-llama/llama-3.2-3b-instruct:free",
-  "qwen/qwen3-0.6b:free",
-  "mistralai/mistral-7b-instruct:free",
-  "microsoft/phi-3-mini-128k-instruct:free",
-];
+const MODEL = "meta-llama/llama-3.2-3b-instruct:free";
 const SYSTEM_PROMPT =
   "You are AI Health Copilot, a knowledgeable and empathetic AI health assistant. Provide clear, evidence-based health information and guidance. Always remind users to consult a qualified healthcare professional for medical diagnoses or treatment decisions. Keep responses concise and easy to understand.";
 
@@ -225,53 +217,36 @@ const Chatbot = () => {
         throw new Error("NO_KEY");
       }
 
-      let botText = null;
-      let lastError = null;
-
-      for (const model of FREE_MODELS) {
-        const response = await fetch(
-          "https://openrouter.ai/api/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-              "Content-Type": "application/json",
-              "HTTP-Referer": window.location.origin,
-              "X-Title": "AI Health Copilot",
-            },
-            body: JSON.stringify({
-              model,
-              messages: [
-                { role: "system", content: SYSTEM_PROMPT },
-                ...updatedHistory,
-              ],
-            }),
+      const response = await fetch(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": window.location.origin,
+            "X-Title": "AI Health Copilot",
           },
-        );
+          body: JSON.stringify({
+            model: MODEL,
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              ...updatedHistory,
+            ],
+          }),
+        },
+      );
 
-        if (response.status === 401) {
-          // Auth failure — no point trying other models
-          throw new Error("API_ERROR:401");
-        }
-
-        const data = await response.json().catch(() => ({}));
-
-        // OpenRouter returns 200 even for provider-level errors — check body too
-        if (!response.ok || data.error) {
-          lastError = data?.error?.message || `HTTP ${response.status}`;
-          continue; // try next model
-        }
-
-        botText = data.choices?.[0]?.message?.content || null;
-        if (botText) break; // success
-        lastError = "Empty response from model";
-        // no content — try next model
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        const msg = errData?.error?.message || `HTTP ${response.status}`;
+        throw new Error(`API_ERROR:${response.status}:${msg}`);
       }
 
-      if (!botText) {
-        throw new Error(`API_ERROR:provider:${lastError || "All models unavailable"}`);
-      }
-
+      const data = await response.json();
+      const botText =
+        data.choices?.[0]?.message?.content ||
+        "Sorry, I could not generate a response.";
       setConversationHistory((prev) => [
         ...prev,
         { role: "assistant", content: botText },
@@ -293,10 +268,7 @@ const Chatbot = () => {
           "⚠️ No API key configured. Please add your OpenRouter API key to the `.env` file as `VITE_OPENROUTER_API_KEY`.";
       } else if (err.message.startsWith("API_ERROR:401")) {
         errorText =
-          "⚠️ Invalid or expired API key. Please update `VITE_OPENROUTER_API_KEY` in your `.env` file with a valid key from openrouter.ai/keys.";
-      } else if (err.message.startsWith("API_ERROR:provider")) {
-        errorText =
-          "⚠️ All AI providers are currently busy. Please wait a moment and try again.";
+          "⚠️ Invalid or expired API key. Please update `VITE_OPENROUTER_API_KEY` in your `.env` file with a valid key from [openrouter.ai](https://openrouter.ai/keys).";
       } else if (err.message.startsWith("API_ERROR:")) {
         const detail = err.message.split(":").slice(2).join(":");
         errorText = `Sorry, the AI service returned an error: ${detail}`;
@@ -332,7 +304,7 @@ const Chatbot = () => {
       {/* Chat Window */}
       {isOpen && (
         <div
-          className="w-96 h-[620px] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-white/20"
+          className="chatbot-window w-96 h-[620px] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-white/20"
           style={{ background: "linear-gradient(145deg, #ffffff, #f0f4ff)" }}
         >
           {/* ── Header ── */}
@@ -590,7 +562,7 @@ const Chatbot = () => {
       {/* ── FAB Toggle Button ── */}
       <button
         onClick={toggleChat}
-        className="relative w-16 h-16 rounded-2xl text-white flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95"
+        className="chatbot-fab relative w-16 h-16 rounded-2xl text-white flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95"
         style={{
           background:
             "linear-gradient(135deg, #0040C1 0%, #3b5fe2 60%, #6366f1 100%)",
