@@ -1,5 +1,5 @@
-import React from 'react';
-import { SignIn } from '@clerk/react';
+import React from "react";
+import { SignIn } from "@clerk/react";
 
 const Login = () => {
   return (
