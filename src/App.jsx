@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './hooks/useAuth';
+import { useAuth, RedirectToSignIn } from '@clerk/react';
 import Layout from './components/Layout';
 import ScrollToTop from './components/ScrollToTop';
 import Home from './pages/Home';
@@ -11,33 +11,32 @@ import Status from './pages/Status';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   
-  if (loading) {
+  if (!isLoaded) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  return isSignedIn ? children : <RedirectToSignIn />;
 };
 
 // Public route component (redirects authenticated users)
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   
-  if (loading) {
+  if (!isLoaded) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  return !isAuthenticated ? children : <Navigate to="/dashboard" />;
+  return !isSignedIn ? children : <Navigate to="/dashboard" />;
 };
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <ScrollToTop />
-        <div className="App">
-          <Routes>
+    <Router>
+      <ScrollToTop />
+      <div className="App">
+        <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route 
@@ -64,7 +63,6 @@ function App() {
           </Routes>
         </div>
       </Router>
-    </AuthProvider>
   );
 }
 

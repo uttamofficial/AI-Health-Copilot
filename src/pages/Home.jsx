@@ -4,10 +4,8 @@ import Button from '../components/Button';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Chatbot from '../components/Chatbot';
-import { useAuth } from '../hooks/useAuth';
 
 const Home = () => {
-  const { isAuthenticated, logout } = useAuth();
   const [activeFeature, setActiveFeature] = useState(0);
   
   const features = [
@@ -55,7 +53,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Navbar isAuthenticated={isAuthenticated} onLogout={logout} />
+      <Navbar />
       
       <div className="flex-grow">
         {/* Hero Section */}

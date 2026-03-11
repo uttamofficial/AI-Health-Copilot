@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import { useAuth } from '../hooks/useAuth';
+import { useUser } from '@clerk/react';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user } = useUser();
   const [selectedFeeling, setSelectedFeeling] = useState(null);
   const [feelingNote, setFeelingNote] = useState('');
 
@@ -125,7 +125,7 @@ const Dashboard = () => {
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
                 <h1 className="text-3xl md:text-4xl font-bold">
-                  Welcome back, {user?.name || 'User'}!
+                  Welcome back, {user?.firstName || user?.fullName || 'User'}!
                 </h1>
                 <span className="text-3xl animate-bounce">👋</span>
               </div>
